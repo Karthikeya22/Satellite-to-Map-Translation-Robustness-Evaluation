@@ -85,11 +85,14 @@ The repository is structured as follows:
 
 ```bash
 .
+.
 ├── README.md
+├── requirements.txt
 ├── Images
 │   ├── sample_images
 │   └── output_images
 └── Code.ipynb
+
 ```
 
 

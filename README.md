@@ -3,13 +3,11 @@
 # **1. Project Overview**
 This project leverages the Pix2Pix GAN framework to translate satellite images into high-resolution map images. It is designed for applications in urban planning, disaster response, and geospatial analysis. In this updated version, we evaluate the **trustworthiness** of the model under **real-world distortions** to ensure robustness and reliability.
 
-## **2. Objective**
+## Objective
 
 - Build a deep learning model that can translate satellite imagery into accurate map representations.
 - Evaluate the **robustness** of the model by testing its performance under common real-world image distortions such as Gaussian noise, blur, and occlusion.
 - Use **PSNR** and **SSIM** to quantitatively measure visual fidelity and structural similarity of outputs.
-
----
 
 ## Trustworthiness Focus: Reliability and Robustness
 
@@ -47,7 +45,7 @@ The repository is structured as follows:
 
 The dataset used in this project consists of **satellite images of cities**, obtained via **web scraping from Google Maps**. It is publicly available and provided by **UC Berkeley’s Electrical and Computer Science Department**.
 
-### **1. Dataset Information**
+### Dataset Information
 - **Total Images (Train + Validation):** **2,194**
 - **Image Format:** Each sample consists of a **concatenated pair of images**, where one half is a **satellite image**, and the other half is a **corresponding map image**.
 - **Image Dimensions:**  
@@ -64,88 +62,146 @@ The dataset used in this project consists of **satellite images of cities**, obt
 - CUDA enabled for accelerated training
 
 ### **Libraries Used**
-- **Python 3.x**
-- **TensorFlow 2.x**
-- **Keras 2.x**
-- **Matplotlib**
-- **OpenCV**
-- **glob, tqdm (for dataset loading & progress tracking)**
+- **Python**: 3.8+
+- **PyTorch**: 1.13.0+
+- **torchvision**: 0.14.0+
+- **TensorFlow**: 2.8.0+ (optional, for additional evaluation tasks)
+- **scikit-image**: 0.19.0+ (used for PSNR and SSIM metric computation)
+- **OpenCV**: 4.5.5+ (for applying noise, blur, and occlusion)
+- **NumPy**: 1.21.0+ (for array computations)
+- **Matplotlib**: 3.5.0+ (for generating visual plots)
+- **tqdm**: 4.62.3 (for showing training and evaluation progress)
+- **glob**: Standard Python library (for file path handling)
+- **random**: Standard Python library (for random distortion generation)
 
 ---
 
-# **5.  Model Architecture**
+# **5. Model Architecture**
 
-## **5.1 Generator: U-Net Architecture for Image-to-Image Translation**
+## **5.1 Generator: U-Net Based Image Translation**
 
-Unlike traditional GANs that map random noise to an image, the **Generator in this project performs image-to-image translation**. This means it **takes an image as input** and transforms it into a different representation of the same image. This task is commonly known as **image translation**, and the framework used here is inspired by **Pix2Pix**.
+The **Generator** uses a **U-Net architecture**, a specialized **Encoder-Decoder** model with **skip connections** that help preserve spatial information during transformation. Unlike traditional GANs that map random noise to images, here the generator performs **image-to-image translation** directly.
 
-### **5.1.1. U-Net Architecture**
-The **Generator network** follows a **U-Net architecture**, which is a specialized type of **Encoder-Decoder model** with **skip connections** linking the Encoder and Decoder layers. These connections help preserve important spatial information during the transformation process.
+- **Input**: Satellite images
+- **Output**: Corresponding map images
+- **Image size**: 256x256
 
-In this project, we use **U-Net 256**, which processes **256x256 images** instead of the larger **U-Net 572**. The key difference between the two variants is the input and output image resolution.
+### **5.1.1 Encoder-Decoder Structure**
 
-### **5.1.2. Functionality**
-#### **Encoder (Feature Extraction)**
-- The **left side of the U-Net** consists of **convolutional layers** that extract essential features from the input image.
-- These extracted features are mapped to a **latent space** (also called a bottleneck representation).
-- The latent space is a **1024-dimensional vector** that captures the most significant information about the image.
+- **Encoder**: Extracts important features from the input image using convolutional layers, downsampling the data to a **1024-dimensional latent space**.
+- **Decoder**: Uses transpose convolutions to reconstruct a translated image from the latent representation.
 
-#### **Decoder (Image Reconstruction)**
-- The **right side of the U-Net** consists of **transpose convolutional layers** that map the latent space representation back into a full-sized image.
-- The **goal** of the Decoder is **not** to reconstruct the exact input image but to generate a transformed version of it.
-- For example, if the input image is a **photo of a dog**, the output image might be a **sketch of the same dog**. The image content remains similar, but the style and representation differ.
+### **5.1.2 Skip Connections**
 
-### **5.1.3. Role of Skip Connections**
-- To **improve training stability** and **retain fine details**, the extracted features from the **Encoder layers** are **directly passed** to corresponding layers in the **Decoder** through **skip connections**.
-- This ensures that the Decoder has access to **both high-level features from the latent space** and **low-level spatial details from the Encoder**.
-- By doing this, the network efficiently translates images while maintaining their structural integrity.
+- **Skip connections** directly link encoder layers to corresponding decoder layers.
+- They help the network:
+  - Retain fine details (edges, shapes)
+  - Improve training stability
+  - Maintain structural integrity during translation
 
 
+## **5.2 Discriminator: CNN-Based Classifier**
+
+The **Discriminator** is a deep **Convolutional Neural Network (CNN)** that classifies whether an image is **real** (from the dataset) or **fake** (generated).
+
+- **Input**: Pairs of satellite and map images
+- **Architecture**:
+  - Multiple convolutional layers with **LeakyReLU activations**
+  - Batch normalization for training stability
+  - Final sigmoid layer outputs a probability (real or fake)
+
+- **Role**:
+  - Provides adversarial feedback to the generator
+  - Helps improve the realism and quality of the generated maps
 
 
-## **5.2 Discriminator: Convolutional Neural Network for Image Classification**
+### **5.2.1 Architecture Overview**
 
-The **Discriminator network** in this project functions as a **binary classifier** that evaluates whether an input image is **real (from the dataset) or fake (generated by the Generator)**. It follows a **Convolutional Neural Network (CNN) architecture**, optimized for adversarial learning.
+- A series of **convolutional layers** progressively extract image features like edges, textures, and structures.
+- **LeakyReLU activations** are used to avoid dead neurons.
+- **Batch Normalization** stabilizes and speeds up training.
+- **Strided convolutions** reduce spatial dimensions instead of pooling layers.
 
-### **5.2.1. Architecture Overview**
-The **Discriminator is a deep CNN** that progressively **extracts hierarchical features** from an image, learning to **distinguish real images from generated ones**. It processes the input through multiple **convolutional layers**, followed by **fully connected layers**, before producing a **single probability score**.
+- Final layers:
+  - The extracted features are **flattened** into a vector.
+  - A **dense (fully connected) layer** predicts the probability of the input being real or fake.
+  - The **Sigmoid activation** outputs a value between 0 (fake) and 1 (real).
 
-### **5.2.2. Functionality**
-#### **Feature Extraction using Convolutional Layers**
-- The Discriminator starts with **several convolutional layers** that scan the image for patterns, edges, and textures.
-- Each **Conv layer** applies a **set of filters (kernels)** to extract meaningful representations.
-- **Stride and padding** control how much the filter moves across the image.
-- **Activation Function:** Uses **LeakyReLU** instead of standard ReLU to prevent **dying neurons** and allow small gradient updates even for negative values.
+### **5.2.2 Functionality in Adversarial Training**
 
-#### **Downsampling and Spatial Compression**
-- After each convolution, the output is **downsampled** using **strided convolutions** (reducing image size and computational cost).
-- **Batch Normalization** is applied to stabilize training and speed up convergence.
-- **Dropout layers** are introduced to prevent overfitting.
+- The Discriminator is trained to distinguish between:
+  - **Real images** (ground truth maps)
+  - **Fake images** (maps generated by the Generator)
+  
+- **Loss Function**: Binary Cross-Entropy Loss is used to measure classification error.
 
-#### **Fully Connected (Dense) Layer & Output**
-- The extracted features are **flattened** into a 1D vector.
-- This vector is passed through **a dense layer** that aggregates the extracted features.
-- **Final Output Layer:** A **single neuron with Sigmoid activation** produces a probability score:
-  - **Output close to 1:** The image is classified as **real**.
-  - **Output close to 0:** The image is classified as **fake** (generated).
+- During adversarial training:
+  - The **Generator improves** by trying to fool the Discriminator.
+  - The **Discriminator improves** by better identifying fake images.
 
-### **5.2.3. Role in Adversarial Training**
-- The **Discriminator is trained** using real images from the dataset and fake images generated by the **Generator**.
-- The **loss function** used is **binary cross-entropy**, which helps the network **minimize classification error**.
-- During training:
-  - The **Generator tries to improve** by creating **more realistic images**.
-  - The **Discriminator gets better** at identifying **fake images**.
-- This adversarial process **pushes both networks to improve**, making the **Generator more effective** in creating realistic images.
+- This adversarial process **forces the Generator to create highly realistic outputs** over time.
 
+---
+
+# **6. Trustworthiness and Security Focus**
+
+In this project, we emphasize the **Reliability and Robustness** aspect of AI trustworthiness.  
+Our goal was to ensure that the model remains dependable even when encountering imperfect or corrupted input data — a common occurrence in real-world satellite imaging.
+
+
+## **6.1 Trustworthiness Aspect Evaluated**
+
+- **Reliability**: The model consistently produces accurate and structurally sound outputs even when facing distortions like noise, blur, or occlusion.
+- **Robustness**: The model maintains high quantitative performance (PSNR > 30, SSIM > 0.81) across various perturbations.
+- **Security Awareness**: Testing against occlusion mimics scenarios like adversarial hiding of features (e.g., cloud cover or intentional interference).
+
+
+## **6.2 Methodology**
+
+- **Perturbation Testing**: We applied realistic distortions to input satellite images.
+- **Metric-Based Evaluation**: Used PSNR and SSIM to measure output fidelity and perceptual quality.
+- **Visual Inspection**: Compared corrupted inputs and generated outputs to ground truth maps.
+
+
+## **6.3 Key Findings**
+
+- The Generator's outputs remained visually and structurally faithful across all distortion types.
+- Even with missing or blurred regions, the model preserved overall spatial alignment and map usability.
+- This confirms that the model meets a **high reliability standard**, making it suitable for critical applications like urban planning, emergency response, and navigation systems.
 
 ---
 
 
-# **6. Results and Conclusion**
 
-### **6.1. Results**
+# **7. Robustness Evaluation**
 
-### Quantitative Evaluation
+To evaluate the **trustworthiness** of the model, we tested its ability to maintain output quality under common real-world distortions.
+
+## **7.1 Distortions Applied**
+
+The following perturbations were introduced to the satellite input images:
+
+- **Gaussian Noise**:  
+  - Mean = 0
+  - Variance (σ²) ≈ 0.01  
+  - Simulates sensor noise and environmental interference.
+
+- **Gaussian Blur**:  
+  - Kernel size = (5×5)  
+  - Simulates atmospheric distortion, motion blur, or defocus in satellite captures.
+
+- **Occlusion**:  
+  - Random black square of size 30×30 pixels  
+  - Simulates missing regions (e.g., cloud cover, shadows).
+
+
+## **7.2 Quantitative Metrics**
+
+The model was evaluated using:
+
+- **PSNR** (Peak Signal-to-Noise Ratio): Measures the fidelity of pixel values between the output and the ground truth. Higher is better.
+- **SSIM** (Structural Similarity Index Measure): Measures perceptual and structural similarity. Closer to 1 is better.
+
 | Distortion | PSNR (dB) | SSIM |
 |------------|-----------|------|
 | Original   | 31.10     | 0.8356 |
@@ -153,25 +209,43 @@ The **Discriminator is a deep CNN** that progressively **extracts hierarchical f
 | Blurred    | 30.76     | 0.8254 |
 | Occluded   | 30.74     | 0.8292 |
 
-### Visual Output
-![Visual Grid](outputs/visual_grid_example.png)
+
+## **7.3 Observations**
+
+- The **PSNR remained above 30 dB** across all types of distortions, indicating high pixel fidelity even when inputs were corrupted.
+- The **SSIM stayed consistently above 0.81**, showing that the generated maps preserved critical spatial structures.
+- The model showed strong **resilience against moderate levels of noise, blur, and missing data** — a key requirement for real-world deployment in fields like disaster management and urban planning.
+
+
+## **7.4 Visual Results**
+
+Below is a sample visualization demonstrating robustness:
+
+| Input (Corrupted) | Output (Generated Map) | Ground Truth Map |
+|:-----------------:|:----------------------:|:----------------:|
+| ![Input Noisy](outputs/input_noisy_example.png) | ![Output Noisy](outputs/output_noisy_example.png) | ![Ground Truth](outputs/ground_truth_example.png) |
 
 ---
 
-### **6.2. Conclusion**
-- The **U-Net-based Generator** successfully learned to translate satellite images into maps.
-- The **use of skip connections in U-Net** helped retain fine details in the output images.
-- The **CNN-based Discriminator** provided effective feedback, ensuring the Generator improved over time.
-- **Adversarial training was effective**, with both networks evolving in response to each other.
-- The **quality of generated maps improved significantly after ~100 epochs**, producing results close to the real dataset.
 
-### **6.3. Future Improvements**
-Although the model performed well, there are some areas for further enhancement:
-- **Train on higher-resolution images** (e.g., 1024x1024) for more detailed outputs.
-- **Use a more advanced Discriminator**, such as **PatchGAN**, which focuses on local features rather than the entire image.
-- **Experiment with different loss functions**, such as **L1 loss** or **perceptual loss**, to improve visual accuracy.
-- **Augment the dataset** with more diverse satellite imagery to improve generalization.
+# **8. Future Improvements**
 
-The results demonstrate that **image-to-image translation using GANs can effectively transform satellite images into maps**, with potential applications in **geospatial analysis, urban planning, and automated cartography**.
+- Extend to **multi-modal satellite inputs** (infrared, night-time, elevation data).
+- Perform **adversarial robustness testing** to simulate attacks and defenses.
+- Train on **higher-resolution images** (512x512 or 1024x1024) for finer map detail.
+- Integrate **explainable AI techniques** (e.g., Grad-CAM) to improve model interpretability.
+- Optimize for **real-time satellite-to-map conversion** for smart city applications and edge devices.
 
----
+
+
+# **9. Conclusion**
+
+In this project, we successfully developed a **Pix2Pix GAN-based model** for translating satellite images into corresponding map images.
+
+Key achievements:
+
+- Achieved **high visual and structural fidelity** across various input distortions (Gaussian noise, blur, occlusion).
+- Demonstrated **robustness** with PSNR consistently above 30 dB and SSIM above 0.81 across test conditions.
+- Evaluated the model’s **trustworthiness** under realistic, real-world perturbations, focusing on **reliability and robustness**.
+- Validated model outputs through both **quantitative metrics** and **visual inspections**.
+- Proposed future enhancements to further improve scalability, resilience, and explainability.

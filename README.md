@@ -3,6 +3,10 @@
 # **1. Project Overview**
 This project leverages the Pix2Pix GAN framework to translate satellite images into high-resolution map images. It is designed for applications in urban planning, disaster response, and geospatial analysis. In this updated version, we evaluate the **trustworthiness** of the model under **real-world distortions** to ensure robustness and reliability.
 
+<br>
+
+![Objective Illustration](Images/output_images/source_sample.png)
+
 ## Objective
 
 - Build a deep learning model that can translate satellite imagery into accurate map representations.

@@ -3,10 +3,6 @@
 # **1. Project Overview**
 This project leverages the Pix2Pix GAN framework to translate satellite images into high-resolution map images. It is designed for applications in urban planning, disaster response, and geospatial analysis. In this updated version, we evaluate the **trustworthiness** of the model under **real-world distortions** to ensure robustness and reliability.
 
-<br>
-
-![Objective Illustration](Images/output_images/source_sample.png)
-
 ## Objective
 
 - Build a deep learning model that can translate satellite imagery into accurate map representations.
@@ -29,7 +25,62 @@ The model maintained PSNR > 30 and SSIM > 0.81 across all test conditions, provi
 
 ---
 
-# **2. Repository Structure**
+
+# **2. Getting Started**
+
+This project can be run either in a **Google Colab** environment (recommended) or on a **local machine**.
+
+
+## Google Colab (Recommended)
+
+1. Upload the following files to your Colab environment:
+   - Main notebook (`Code.ipynb`)
+   - Any additional folders (like `Images/`, `outputs/`) if needed.
+
+2. Install necessary libraries inside the notebook:
+   ```python
+   !pip install numpy matplotlib scikit-image opencv-python tensorflow tqdm
+   ```
+
+3. Run all notebook cells sequentially to:
+   - Apply input corruptions
+   - Generate outputs
+   - Calculate robustness metrics (PSNR, SSIM)
+   - Visualize results
+
+
+## Local Machine Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/Satellite-Image-to-Map-Translation.git
+   cd Satellite-Image-to-Map-Translation
+   ```
+
+2. Install dependencies using the provided `requirements.txt`:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Open `Code.ipynb` using Jupyter Notebook or VSCode.
+
+4. Make sure:
+   - Dataset/images are placed properly.
+   - Trained Generator model is available if needed.
+
+5. Execute the notebook cell-by-cell.
+
+---
+
+## **Important Notes**
+
+- Designed for **Python 3.8+** environments.
+- GPU usage is highly recommended for faster prediction and visualization.
+- If using Colab, enable GPU:  
+  `Runtime > Change runtime type > GPU`.
+  
+
+# Repository Structure
 The repository is structured as follows:
 
 ```bash

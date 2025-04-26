@@ -173,6 +173,11 @@ Our goal was to ensure that the model remains dependable even when encountering 
 - Even with missing or blurred regions, the model preserved overall spatial alignment and map usability.
 - This confirms that the model meets a **high reliability standard**, making it suitable for critical applications like urban planning, emergency response, and navigation systems.
 
+
+<br>
+
+![Objective Illustration](Images/output_images/robustness1.png)
+
 ---
 
 
@@ -199,6 +204,7 @@ The following perturbations were introduced to the satellite input images:
   - Simulates missing regions (e.g., cloud cover, shadows).
 
 
+
 ## **7.2 Quantitative Metrics**
 
 The model was evaluated using:
@@ -214,6 +220,13 @@ The model was evaluated using:
 | Occluded   | 30.74     | 0.8292 |
 
 
+![Objective Illustration](https://github.com/Karthikeya22/Satellite-to-Map-Translation-Robustness-Evaluation/blob/main/Images/output_images/PSNR%20Graph.png)
+
+![Objective Illustration](https://github.com/Karthikeya22/Satellite-to-Map-Translation-Robustness-Evaluation/blob/main/Images/output_images/SSIM%20Graph.png)
+
+
+
+
 ## **7.3 Observations**
 
 - The **PSNR remained above 30 dB** across all types of distortions, indicating high pixel fidelity even when inputs were corrupted.
@@ -224,10 +237,9 @@ The model was evaluated using:
 ## **7.4 Visual Results**
 
 Below is a sample visualization demonstrating robustness:
+<br>
 
-| Input (Corrupted) | Output (Generated Map) | Ground Truth Map |
-|:-----------------:|:----------------------:|:----------------:|
-| ![Input Noisy](outputs/input_noisy_example.png) | ![Output Noisy](outputs/output_noisy_example.png) | ![Ground Truth](outputs/ground_truth_example.png) |
+![Objective Illustration](Images/output_images/robustness2.png)
 
 ---
 

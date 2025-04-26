@@ -37,12 +37,8 @@ This project can be run either in a **Google Colab** environment (recommended) o
    - Main notebook (`Code.ipynb`)
    - Any additional folders (like `Images/`, `outputs/`) if needed.
 
-2. Install necessary libraries inside the notebook:
-   ```python
-   !pip install numpy matplotlib scikit-image opencv-python tensorflow tqdm
-   ```
 
-3. Run all notebook cells sequentially to:
+2. Run all notebook cells sequentially to:
    - Apply input corruptions
    - Generate outputs
    - Calculate robustness metrics (PSNR, SSIM)
